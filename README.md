@@ -1,0 +1,2 @@
+# A Collection of Smart Contracts
+this is basically a collection of Smart Contracts. Shoutout to [HASHLIPS](https://github.com/HashLips). He gave me all of the starter code for most of theese contracts but i will edit them and ad my own over time.
