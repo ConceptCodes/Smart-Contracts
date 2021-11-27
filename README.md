@@ -1,2 +1,2 @@
 # A Collection of Smart Contracts
-this is basically a collection of Smart Contracts. Shoutout to [HASHLIPS](https://github.com/HashLips). He gave me all of the starter code for most of theese contracts but i will edit them and ad my own over time.
+This is a collection of Smart Contracts. Big shoutout to [HASHLIPS](https://github.com/HashLips), his youtube tutorials provided most of the starter code/inspiration for this repo. The beauty of smart contracts is that you put your trust in the code itself, instead of the man. Code is law :). As i continue to work on more crypto related projects I will update this repo with more template smart contracts, hopefully you come across one that you find helpful.

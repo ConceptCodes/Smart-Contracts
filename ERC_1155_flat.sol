@@ -1048,8 +1048,8 @@ contract Tutorial is ERC1155, Ownable {
   mapping(uint => string) public tokenURI;
 
   constructor() ERC1155("") {
-    name = "RetroArt";
-    symbol = "RETROART";
+    name = "NFT_NAME_HERE";
+    symbol = "NFT_SYMBOL_HERE";
   }
 
   function mint(address _to, uint _id, uint _amount) external onlyOwner {
