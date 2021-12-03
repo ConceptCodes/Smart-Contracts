@@ -14,7 +14,7 @@ contract SvgNFT is ERC721Enumerable, Ownable {
 
   constructor() ERC721("<NAME>", "<SYMBOL>") { }
 
-  function mint(uint256 _mintAmount) public payable {
+  function mint() public payable {
     uint256 supply = totalSupply();
     require(supply + 1 <= maxSupply);
 
@@ -38,8 +38,8 @@ contract SvgNFT is ERC721Enumerable, Ownable {
       )));
   }
 
-  function tokenURI(uint256 tokenId) public view virtual override returns(string memory) {
-    require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+  function tokenURI(uint256 _tokenId) public view virtual override returns(string memory) {
+    require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
     return string(abi.encodePacked(
         'data:application/json:base64',
         Base64.encode(bytes(abi.encodePacked(
