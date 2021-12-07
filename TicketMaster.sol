@@ -13,6 +13,7 @@ contract TicketMaster {
 
     /**
         @dev lets guest purchase tickets
+        @param _guest address of guest purchasing ticket
      */
     function buyTickets(address _guest) payable public {
         require(msg.value >= price);
@@ -21,6 +22,7 @@ contract TicketMaster {
 
     /**
         @dev lets guest use their ticket
+        @param _guest address of guest using ticket
     */
 
     function useTicket(address _guest) public {  
@@ -29,6 +31,7 @@ contract TicketMaster {
 
     /**
         @dev adds tickets to guest
+        @param _guest address of guest to update ticket holdings
      */
     function addTicket(address _guest, uint256 _amt) internal {
         ticketHolders[_guest] = ticketHolders[_guest] + _amt;
