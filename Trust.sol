@@ -3,7 +3,8 @@
 pragma solidity ^0.8.0;
 
 /**
-    @title Family Trust Smart Contract
+    @title Family Trust 
+    @dev simple implementation of creating a trust for your kids, more advance version will have voting rights
  */
 contract Trust { 
     struct Kid { 
