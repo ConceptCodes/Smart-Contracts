@@ -5,14 +5,16 @@ pragma solidity ^0.8.0;
 /// @title A smart contract for shop owners
 /// @author Concept
 /// @notice allows customers to buy items and get refunds
+/// @notice NOT PRODUCTION READY
 /// @dev implements basic guard checks
 contract Shop {
     uint256 private basePrice = 1 ether;
     mapping(string => uint256) items;
-    mapping(address => string) customerPurchases;
+    mapping(address => string[]) customerPurchases;
     address private customer = msg.sender;
 
     event ItemSold(address indexed _from, uint256 cost);
+    event ItemRefunded(address indexed _from, uint256 cost);
 
     constructor() {
         items["plain"] = basePrice;
@@ -33,8 +35,13 @@ contract Shop {
 
     /// @dev ensures customer is eligible for refund
     modifier itemHasBeenPurchased(string calldata _item) {
-        require(keccak256(abi.encodePacked(customerPurchases[customer])) == keccak256(abi.encodePacked(_item)), "You haven't bought that item");
-        _;
+        for(uint i = 0; i < customerPurchases[customer].length; i++) {
+            if(keccak256(abi.encodePacked(customerPurchases[customer][i])) == keccak256(abi.encodePacked(_item))) {
+            } else {
+                revert("You haven't bought that item");
+            }
+            _;
+        }
     }
 
     /// @notice Displays the price of your selected item
@@ -45,21 +52,33 @@ contract Shop {
         return items[_item];
     }
 
+    /// @notice List all the items you have bought
+    /// @dev looks at customer purchases 
+    function getItemsBought() public view returns(string[] memory) {
+        return customerPurchases[msg.sender];
+    }
+
     /// @notice Allows you to buy items
     /// @param _item item you would like to purchase
     /// @dev Checks if value sent is greater than or equal to the cost of the item, if so then emit an item sold event
     function buyItem(string calldata _item) payable public doesItemExist(_item) hasEnoughFunds(_item) {
-        customerPurchases[customer] = _item;
+        customerPurchases[customer].push(_item);
         emit ItemSold(customer, msg.value);
     }
 
     /// @notice Allows customer to receive a refund 
     /// @param _item item you want a refund for
     /// @dev checks what item the cusotomer has bought and returns that amount to them
-    /// @return true if refund was successful
-    function refund(string calldata _item) public itemHasBeenPurchased(_item) returns(bool) {
+    function refund(string calldata _item) public itemHasBeenPurchased(_item) {
+        uint256 currentBalance = address(this).balance;
+
+        require(getBalance() >= items[_item], "Not enough funds");
         (bool success, ) = payable(customer).call{value: items[_item]}("");
-        return success;
+
+        require(success, "refund was unsuccessful");
+        assert(getBalance() == currentBalance - items[_item]);
+
+        emit ItemRefunded(customer, items[_item]);
     }
 
     /// @notice Display the balance of the smart contract
