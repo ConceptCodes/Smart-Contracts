@@ -28,6 +28,8 @@ contract Shop is Ownable {
     event ItemAdded(string name, uint256 cost);
     event ItemRemoved(string name);
 
+    constructor() public Ownable() {}
+
     /// @dev ensures customer has enough funds to purchase item
     modifier hasEnoughFunds(string memory _item) {
         require(msg.value >= items[_item], "Not enough to buy item");
