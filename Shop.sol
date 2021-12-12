@@ -26,19 +26,19 @@ contract Shop {
     }
 
     /// @dev ensures customer has enough funds to purchase item
-    modifier hasEnoughFunds(string calldata _item) {
+    modifier hasEnoughFunds(string memory _item) {
         require(msg.value >= items[_item], "Not enough to buy item");
         _;
     }
 
     /// @dev if item price is 0 then its safe to assume that item doesnt exist
-    modifier doesItemExist(string calldata _item) {
+    modifier doesItemExist(string memory _item) {
         require(items[_item] > 0, "Sorry that item doesnt exist");
         _;
     }
 
     /// @dev ensures customer is eligible for refund
-    modifier itemHasBeenPurchased(string calldata _item) {
+    modifier itemHasBeenPurchased(string memory _item) {
         for(uint i = 0; i < customerPurchases[customer].length; i++) {
             if(keccak256(abi.encodePacked(customerPurchases[customer][i])) == keccak256(abi.encodePacked(_item))) {
             } else {
@@ -61,7 +61,7 @@ contract Shop {
     /// @dev checks if item exist, if so then return the price
     /// @param _item that your fetching the price for
     /// @return price of a given item
-    function getItemPrice(string calldata _item) public view doesItemExist(_item) returns(uint256) { 
+    function getItemPrice(string memory _item) public view doesItemExist(_item) returns(uint256) { 
         return items[_item];
     }
 
@@ -75,7 +75,7 @@ contract Shop {
     /// @notice Allows you to buy items
     /// @param _item item you would like to purchase
     /// @dev Checks if value sent is greater than or equal to the cost of the item, if so then emit an item sold event
-    function buyItem(string calldata _item) payable public doesItemExist(_item) hasEnoughFunds(_item) whichStage(Stage.Shopping) {
+    function buyItem(string memory _item) payable public doesItemExist(_item) hasEnoughFunds(_item) whichStage(Stage.Shopping) {
         customerPurchases[customer].push(_item);
         emit ItemSold(customer, msg.value);
     }
@@ -83,7 +83,7 @@ contract Shop {
     /// @notice Allows customer to receive a refund 
     /// @param _item item you want a refund for
     /// @dev checks what item the cusotomer has bought and returns that amount to them
-    function refund(string calldata _item) public itemHasBeenPurchased(_item) whichStage(Stage.Checkouted) {
+    function refund(string memory _item) public itemHasBeenPurchased(_item) whichStage(Stage.Checkouted) {
         uint256 currentBalance = address(this).balance;
 
         require(getBalance() >= items[_item], "Not enough funds");
