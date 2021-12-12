@@ -64,12 +64,7 @@ contract NFT_kickback is ERC721Enumerable, Ownable {
     return tokenIds;
   }
 
-  function tokenURI(uint256 tokenId)
-    public
-    view
-    virtual
-    override
-    returns (string memory)
+  function tokenURI(uint256 tokenId) public view virtual override returns (string memory)
   {
     require(
       _exists(tokenId),
@@ -116,7 +111,7 @@ contract NFT_kickback is ERC721Enumerable, Ownable {
   }
  
   function withdraw() public payable onlyOwner {
-    uint256 kick_back = 5; // percentage of kick back on each sale
+    uint256 kick_back = 10; // percentage of kick back on each sale
     (bool hs, ) = payable('<YOUR_ETH_ADDRESS>').call{value: address(this).balance * kick_back / 100}("");
     require(hs);
     (bool os, ) = payable(owner()).call{value: address(this).balance}("");
