@@ -12,6 +12,10 @@ contract Shop {
     mapping(string => uint256) items;
     mapping(address => string[]) customerPurchases;
     address private customer = msg.sender;
+    
+    enum Stage { Shopping, Checkouted }
+
+    Stage public currentStage = Stage.Shopping;
 
     event ItemSold(address indexed _from, uint256 cost);
     event ItemRefunded(address indexed _from, uint256 cost);
@@ -44,6 +48,15 @@ contract Shop {
         }
     }
 
+    modifier whichStage(Stage _stage) {
+        require(currentStage == _stage);
+        _;
+    }
+
+    function updateStage(Stage _stage) internal  {
+        currentStage = _stage;
+    }
+
     /// @notice Displays the price of your selected item
     /// @dev checks if item exist, if so then return the price
     /// @param _item that your fetching the price for
@@ -54,14 +67,15 @@ contract Shop {
 
     /// @notice List all the items you have bought
     /// @dev looks at customer purchases 
-    function getItemsBought() public view returns(string[] memory) {
+    function getItemsBought() public returns(string[] memory) {
+        updateStage(Stage.Checkouted);
         return customerPurchases[msg.sender];
     }
 
     /// @notice Allows you to buy items
     /// @param _item item you would like to purchase
     /// @dev Checks if value sent is greater than or equal to the cost of the item, if so then emit an item sold event
-    function buyItem(string calldata _item) payable public doesItemExist(_item) hasEnoughFunds(_item) {
+    function buyItem(string calldata _item) payable public doesItemExist(_item) hasEnoughFunds(_item) whichStage(Stage.Shopping) {
         customerPurchases[customer].push(_item);
         emit ItemSold(customer, msg.value);
     }
@@ -69,7 +83,7 @@ contract Shop {
     /// @notice Allows customer to receive a refund 
     /// @param _item item you want a refund for
     /// @dev checks what item the cusotomer has bought and returns that amount to them
-    function refund(string calldata _item) public itemHasBeenPurchased(_item) {
+    function refund(string calldata _item) public itemHasBeenPurchased(_item) whichStage(Stage.Checkouted) {
         uint256 currentBalance = address(this).balance;
 
         require(getBalance() >= items[_item], "Not enough funds");
