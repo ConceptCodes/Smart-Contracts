@@ -59,14 +59,14 @@ contract Shop is Ownable {
         _;
     }
 
-    function addItem(uint256 price, string memory name) public onlyOwner {
-        items[name] = Item(price, name);
-        emit ItemAdded(name, cost);
+    function addItem(uint256 _price, string memory _name) public onlyOwner {
+        items[_name] = Item(_price, _name);
+        emit ItemAdded(_name, _price);
     }
 
     function removeItem(string memory _name) public onlyOwner {
         delete items[_name];
-        emit ItemRemoved(item);
+        emit ItemRemoved(_name);
     }
 
     function updateStage(Stage _stage) internal  {
