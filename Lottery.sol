@@ -25,6 +25,7 @@ contract Lottery is Ownable {
     /// @dev we use internal so that it can only be called from the contract
     /// @dev we use view since were only reading data from the contract
     /// @dev this function will be exculded from the abi 
+    /// @return a random unit256 number
     function random() internal view returns(uint256) { 
         return unit256(keccak256(abi.encodePacked(block.difficulty, now(), players.length)));
     }
@@ -37,12 +38,19 @@ contract Lottery is Ownable {
         require(players.length >= 3, "Not enough players");
         winner = players[random() % players.length];
         winner.transfer(getBalance());
-        players = new address payable[](0);
+        resetLottery();
     }
 
     /// @notice returns the balance of the contract
     /// @dev we use view since were not modifing data, only returing it
+    /// @return the balance of the contract
     function getBalance() public view returns(uint256) {
         return address(this).balance;
+    }
+
+    /// @notice resets the lottery
+    /// @dev clears players from the list
+    function resetLottery() internal {
+        players = new address payable[](0);
     }
 }
