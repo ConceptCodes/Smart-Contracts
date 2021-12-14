@@ -33,7 +33,7 @@ contract Lottery is Ownable {
     /// @notice picks the winner of the lottery
     /// @dev we use the onlyOwner modifier to ensure only the contract owner can select a winner
     /// @dev the modifier is given to us from @openzeppelin
-    /// @dev once the player is selcted we pay them and then reset the players list
+    /// @dev once the winner is selcted we pay them and then reset the game
     function pickWinner() public onlyOwner {
         require(players.length >= 3, "Not enough players");
         winner = players[random() % players.length];
