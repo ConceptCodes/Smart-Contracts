@@ -8,37 +8,53 @@ import "@openzeppelin/contracts/ownership/Ownable.sol";
 /// @author concept
 /// @notice allows you to answer questions to win money
 contract HQ is Ownable {
-    mapping(string => Question) quiz;
+    mapping(string => Question) public _quiz;
+    string[5] public questions;
+    uint256 public _count = 0;
     
     struct Question {
         string prompt;
         string answer;
-        bool correct;
     }
 
-    event questionAnswered(bool guess);
+    /// @notice a new question has been added
+    /// @param _question the question that was given
+    /// @param _answer the answer that question
+    event QuestionAdded(string _question, string _answer);
 
-    constructor() Ownable() { 
-        quiz["Q1"] = Question({
-            prompt: "Q1",
-            answer: keccak256(abi.encodePacked("A1")),
-            correct: false
+    /// @notice alert that player has answered correctly
+    /// @param _question the question that was answered
+    /// @param _answer the answer that was given
+    event CorrectAnswer(string _question, string _answer);
+
+    modifier notOnwer {
+        require(msg.sender != owner(), "Owner cannot participate");
+        _;
+    }
+
+    constructor() Ownable() {  }
+
+    /// @notice add a new question
+    /// @dev make sure the question length is 
+    function addQuestion(string memory _question, string memory _answer) external onlyOwner {
+        _quiz[_question] = Question({
+            prompt: _question,
+            answer: keccak256(abi.encodePacked(_answer))
         });
-        quiz["Q2"] = Question({
-            prompt: "Q2",
-            answer: keccak256(abi.encodePacked("A2")),
-            correct: false
-        });
-        quiz["Q3"] = Question({
-            prompt: "Q3",
-            answer: keccak256(abi.encodePacked("A3")),
-            correct: false
-        });
+        questions.push(_question);
+        emit QuestionAdded(_question, _answer);
+    }
+
+    /// @notice the questions for this quiz
+    /// @return the questions array
+    function getQuestions() external returns(string[] memory) {
+        return questions;
     }
     
     /// @notice fund the contract with ether
     /// @dev only the owner can send ether to the contract
     receive() external payable onlyOwner {
+        require(getBalance() == 0, "Prize money has already been set");
         require(msg.value >= 1 ether, "Minimum amount is 1 ether");
     }
 
@@ -46,17 +62,24 @@ contract HQ is Ownable {
     /// @dev checks if your guess properly matches the question's answer
     /// @param _answer your answer to the question
     /// @param _question the question your curretly ansewring
-    function guess(string memory _question, string memory _answer) external view  {
-        if(keccak256(abi.encodePacked(quiz[_question].answer)) == _answer){
-            quiz[_question].correct = true;
-            emit questionAnswered(true);
-        } else{
-            emit questionAnswered(false);
-            revert("Sorry your answer was incorrect")
-        }
+    function guess(string memory _question, string memory _answer) external view  notOnwer {
+        require(keccak256(abi.encodePacked(quiz[_question].answer)) == _answer, "Sorry your answer was incorrect");
+        emit CorrectAnswer(_question, _answer);
+        _count++;
     }
 
-    /// @notice gives you the prize money
+    /// @notice collect your prize money
+    /// @dev if you have answered all the questions correctly you can withdraw the contract balance
+    function withdraw() external notOnwer {
+        require(_count == questions.length, "Sorry you need to answer all the questions correctly");
+        for(uint i = 0; i <= questions.length; i++) {
+           delete quiz[questions[i]]; 
+        }
+        questions = [];
+        require(msg.sender.send(getBalance()));
+    }
+
+    /// @notice the prize money
     /// @return the current contract balance
     function getBalance() external returns(uint256) {
         return address(this).balance;
