@@ -23,7 +23,7 @@ contract HQ is Ownable {
             for(uint256 j = 0, j <= _answers.length; j++) {
                 questions[i] = Question({
                     prompt: _questions[i],
-                    answer: _answers[j]
+                    answer: keccak256(abi.encodePacked(_answers[j])
                     correct: false
                 })
             }
