@@ -1,56 +1,88 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.4;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 
-/// @title A simple lottery in solidity
+/// @title HQ trivia game
 /// @author concept
-/// @notice whoever wins the lottery gets the full amount of the contract balance
-contract Lottery is Ownable {
-    address payable[] public players;
-    uint256 public minimumBet = 1 ether;
-    // address payable public winner;
-
-    constructor() Ownable() { }
-
-    /// @notice this allows us send ether to this contract
-    receive() external payable {
-        require(msg.value >= minimumBet, "Minimum amount to play is 1 ether");
-        require(msg.sender != owner(), "Owner cannot participate in the lottery");
-        players.push(payable(msg.sender));
+/// @notice allows you to answer questions to win money
+contract HQ is Ownable {
+    mapping(string => Question) public _quiz;
+    string[] public questions;
+    uint256 public _count = 0;
+    
+    struct Question {
+        string prompt;
+        bytes32 answer;
     }
 
-    /// @notice returns a random number
-    /// @dev we use internal so that it can only be called from the contract
-    /// @dev we use view since were only reading data from the contract
-    /// @dev this function will be exculded from the abi 
-    /// @return a random unit256 number
-    function random() internal view returns(uint256) { 
-        return unit256(keccak256(abi.encodePacked(block.difficulty, now(), players.length)));
+    /// @notice a new question has been added
+    /// @param _question the question that was given
+    /// @param _answer the answer that question
+    event QuestionAdded(string _question, string _answer);
+
+    /// @notice alert that player has answered correctly
+    /// @param _question the question that was answered
+    /// @param _answer the answer that was given
+    event CorrectAnswer(string _question, string _answer);
+
+    modifier notOnwer {
+        require(msg.sender != owner(), "Owner cannot participate");
+        _;
     }
 
-    /// @notice picks the winner of the lottery
-    /// @dev we use the onlyOwner modifier to ensure only the contract owner can select a winner
-    /// @dev the modifier is given to us from @openzeppelin
-    /// @dev once the winner is selcted we pay them and then reset the game
-    function pickWinner() public onlyOwner {
-        require(players.length >= 3, "Not enough players");
-        winner = players[random() % players.length];
-        winner.transfer(getBalance());
-        resetLottery();
+    constructor() Ownable() {  }
+
+    /// @notice add a new question
+    /// @dev make sure the question length is 
+    function addQuestion(string memory _question, string memory _answer) external onlyOwner {
+        _quiz[_question] = Question({
+            prompt: _question,
+            answer: keccak256(abi.encodePacked(_answer))
+        });
+        questions.push(_question);
+        emit QuestionAdded(_question, _answer);
     }
 
-    /// @notice returns the balance of the contract
-    /// @dev we use view since were not modifing data, only returing it
-    /// @return the balance of the contract
-    function getBalance() public view returns(uint256) {
+    /// @notice the questions for this quiz
+    /// @return the questions array
+    function getQuestions() external returns(string[] memory) {
+        return questions;
+    }
+    
+    /// @notice fund the contract with ether
+    /// @dev only the owner can send ether to the contract
+    receive() external payable onlyOwner {
+        require(getBalance() == 0, "Prize money has already been set");
+        require(msg.value >= 1 ether, "Minimum amount is 1 ether");
+    }
+
+    /// @notice how you answer the question
+    /// @dev checks if your guess properly matches the question's answer
+    /// @param _answer your answer to the question
+    /// @param _question the question your curretly ansewring
+    function guess(string memory _question, string memory _answer) external view  notOnwer {
+        require(keccak256(abi.encodePacked(_quiz[_question].answer)) == keccak256(abi.encodePacked(_answer)), "Sorry your answer was incorrect");
+        emit CorrectAnswer(_question, _answer);
+        _count++;
+    }
+
+    /// @notice collect your prize money
+    /// @dev if you have answered all the questions correctly you can withdraw the contract balance
+    function withdraw() external notOnwer {
+        require(_count == questions.length, "Sorry you need to answer all the questions correctly");
+        for(uint i = 0; i <= questions.length; i++) {
+           delete _quiz[questions[i]]; 
+        }
+        delete questions;
+        (bool success, ) = payable(msg.sender).transfer(getBalance());
+        require(success);
+    }
+
+    /// @notice the prize money
+    /// @return the current contract balance
+    function getBalance() public returns(uint256) {
         return address(this).balance;
-    }
-
-    /// @notice resets the lottery
-    /// @dev clears players from the list
-    function resetLottery() internal {
-        players = new address payable[](0);
     }
 }
