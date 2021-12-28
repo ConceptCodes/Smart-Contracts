@@ -27,6 +27,8 @@ contract HQ is Ownable {
     /// @param _answer the answer that was given
     event CorrectAnswer(string _question, string _answer);
 
+    event WinnerChosen(address _winner);
+
     modifier notOnwer {
         require(msg.sender != owner(), "Owner cannot participate");
         _;
@@ -47,7 +49,7 @@ contract HQ is Ownable {
 
     /// @notice the questions for this quiz
     /// @return the questions array
-    function getQuestions() external returns(string[] memory) {
+    function getQuestions() public view returns(string[] memory) {
         return questions;
     }
     
@@ -62,7 +64,7 @@ contract HQ is Ownable {
     /// @dev checks if your guess properly matches the question's answer
     /// @param _answer your answer to the question
     /// @param _question the question your curretly ansewring
-    function guess(string memory _question, string memory _answer) external view  notOnwer {
+    function guess(string memory _question, string memory _answer) public notOnwer {
         require(keccak256(abi.encodePacked(_quiz[_question].answer)) == keccak256(abi.encodePacked(_answer)), "Sorry your answer was incorrect");
         emit CorrectAnswer(_question, _answer);
         _count++;
@@ -76,13 +78,15 @@ contract HQ is Ownable {
            delete _quiz[questions[i]]; 
         }
         delete questions;
-        (bool success, ) = payable(msg.sender).transfer(getBalance());
-        require(success);
+        (bool success, ) = payable(msg.sender).call{value: getBalance()}("");
+        require(success, "refund was unsuccessful");
+        assert(getBalance() == 0);
+        emit WinnerChosen(msg.sender);
     }
 
     /// @notice the prize money
     /// @return the current contract balance
-    function getBalance() public returns(uint256) {
+    function getBalance() public view returns(uint256) {
         return address(this).balance;
     }
 }
